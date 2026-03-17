@@ -60,6 +60,20 @@
             color: gray;
         }
 
+        .job-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .job-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
         .upload-area {
             border: 2px dashed var(--border-color);
             padding: 30px;
@@ -133,6 +147,8 @@
 
         function ResumeAnalyzer() {
             const [file, setFile] = useState(null);
+            const [jobRole, setJobRole] = useState("");
+            const [experienceLevel, setExperienceLevel] = useState("");
             const [loading, setLoading] = useState(false);
             const [score, setScore] = useState(0);
             const [suggestions, setSuggestions] = useState([]);
@@ -155,6 +171,8 @@
 
                 const formData = new FormData();
                 formData.append("file", file);
+                formData.append("jobRole", jobRole);
+                formData.append("experienceLevel", experienceLevel);
 
                 try {
                     const res = await fetch("http://localhost:5000/api/analyze", {
@@ -185,6 +203,26 @@
                     <p className="subtitle">Upload resume & get feedback</p>
 
                     {error && <div className="error-msg">{error}</div>}
+
+                    <input 
+                        type="text" 
+                        placeholder="Target Job Role (e.g., Software Engineer)" 
+                        className="job-input" 
+                        value={jobRole} 
+                        onChange={(e) => setJobRole(e.target.value)} 
+                    />
+
+                    <select 
+                        className="job-input" 
+                        value={experienceLevel} 
+                        onChange={(e) => setExperienceLevel(e.target.value)}
+                    >
+                        <option value="">Select Experience Level</option>
+                        <option value="Entry-level">Entry-level</option>
+                        <option value="Mid-level">Mid-level</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Executive">Executive</option>
+                    </select>
 
                     <div className={`upload-area ${file ? "has-file" : ""}`}>
                         <input type="file" className="file-input" onChange={handleFileChange} />

@@ -21,7 +21,7 @@ def extract_text_from_pdf(file_stream):
         print(f"Error extracting PDF text: {e}")
         return ""
 
-def analyze_resume(text):
+def analyze_resume(text, job_role="", experience_level=""):
     """
     Detailed AI resume analysis using Groq and Llama 3.
     """
@@ -31,13 +31,61 @@ def analyze_resume(text):
             "suggestions": ["The document is empty or could not be read."]
         }
         
+    role_context_parts = []
+    if job_role:
+        role_context_parts.append(f"the role of '{job_role}'")
+    if experience_level:
+        role_context_parts.append(f"an experience level of '{experience_level}'")
+        
+    role_context = ""
+    if role_context_parts:
+        role_context = f" The user is applying for {' and '.join(role_context_parts)}."
+        
     prompt = f"""
-    You are an expert AI resume analyzer and career coach.
-    Please review the following resume text and provide a highly detailed, constructive analysis.
-    Return your analysis as a JSON object with exactly two keys:
-    1. "score": An integer from 0 to 100 representing the overall quality, impact, and formatting of the resume. 
-    2. "suggestions": A list of strings, providing specific, detailed, and actionable suggestions to improve the resume. Include feedback on phrasing, missing sections, formatting, and impactful verbs.
+    You are a strict ATS resume evaluator used by recruiters.{role_context}
 
+    You must evaluate the resume realistically. Do NOT inflate scores.
+
+    Evaluate the resume using the following categories:
+
+    1. Content Quality (0–25)
+    - Relevant experience
+    - meaningful descriptions
+    - clarity of responsibilities
+
+    2. Achievements & Impact (0–25)
+    - quantified achievements
+    - measurable impact
+    - strong action verbs
+
+    3. Structure & Formatting (0–20)
+    - readable layout
+    - logical section order
+    - bullet point clarity
+
+    4. Skills & Relevance (0–15)
+    - alignment with job role
+    - relevant technical skills
+
+    5. Grammar & Clarity (0–15)
+    - grammar
+    - spelling
+    - readability
+
+    Total score must equal the sum of these categories (0–100).
+
+    Important rules:
+    - Be strict and realistic.
+    - Most resumes should score between 55 and 75.
+    - Only exceptional resumes deserve 85+.
+    - If achievements are missing, reduce the score significantly.
+
+    Return ONLY a JSON object with:
+
+{{
+"score": final_score,
+"suggestions": [list of detailed improvement suggestions]
+}}
     Resume Text:
     {text}
     """

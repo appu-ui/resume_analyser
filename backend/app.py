@@ -49,8 +49,11 @@ def analyze():
         else:
             return jsonify({'error': 'Unsupported file type. Please upload a PDF or TXT file.'}), 400
             
+        job_role = request.form.get('jobRole', '')
+        experience_level = request.form.get('experienceLevel', '')
+            
         # Call the analysis function on the extracted text
-        result = analyze_resume(text)
+        result = analyze_resume(text, job_role, experience_level)
         
         # Save the result to the SQLite database
         try:
