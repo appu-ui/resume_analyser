@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- React CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --text-color: #1f2937;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            max-width: 650px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            margin-bottom: 25px;
+            color: gray;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            padding: 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .upload-area.has-file {
+            border-color: var(--success-color);
+            background: #ecfdf5;
+        }
+
+        .file-input {
+            width: 100%;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .score-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+        }
+
+        .score-good {
+            background: green;
+        }
+
+        .score-average {
+            background: orange;
+        }
+
+        .score-poor {
+            background: red;
+        }
+
+        .result-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .error-msg {
+            color: red;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" id="root"></div>
+
+    <script type="text/babel">
+
+        const { useState } = React;
+
+        function ResumeAnalyzer() {
+            const [file, setFile] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [score, setScore] = useState(0);
+            const [suggestions, setSuggestions] = useState([]);
+            const [error, setError] = useState("");
+
+            const handleFileChange = (e) => {
+                setFile(e.target.files[0]);
+                setSuggestions([]);
+                setError("");
+            };
+
+            const handleAnalyze = async () => {
+                if (!file) {
+                    setError("Please upload a file first.");
+                    return;
+                }
+
+                setLoading(true);
+                setError("");
+
+                const formData = new FormData();
+                formData.append("file", file);
+
+                try {
+                    const res = await fetch("http://localhost:5000/api/analyze", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const data = await res.json();
+                    setScore(data.score);
+                    setSuggestions(data.suggestions);
+
+                } catch {
+                    setError("Server error. Try again.");
+                }
+
+                setLoading(false);
+            };
+
+            const getScoreClass = () => {
+                if (score >= 80) return "score-good";
+                if (score >= 50) return "score-average";
+                return "score-poor";
+            };
+
+            return (
+                <div>
+                    <h1>AI Resume Analyzer</h1>
+                    <p className="subtitle">Upload resume & get feedback</p>
+
+                    {error && <div className="error-msg">{error}</div>}
+
+                    <div className={`upload-area ${file ? "has-file" : ""}`}>
+                        <input type="file" className="file-input" onChange={handleFileChange} />
+                        <p>{file ? file.name : "Upload Resume"}</p>
+                    </div>
+
+                    <button className="btn" onClick={handleAnalyze} disabled={loading}>
+                        {loading ? "Analyzing..." : "Upload & Analyze"}
+                    </button>
+
+                    {suggestions.length > 0 && (
+                        <div className="result-container">
+                            <h3>Score</h3>
+                            <div className={`score-circle ${getScoreClass()}`}>
+                                {score}
+                            </div>
+
+                            <h3>Suggestions</h3>
+                            <ul>
+                                {suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById("root")).render(<ResumeAnalyzer />);
+
+    </script>
+
+</body>
+
+</html>
